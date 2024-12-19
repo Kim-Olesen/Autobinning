@@ -10,12 +10,14 @@ from tkinter import filedialog
 
 ##Functions
 
-##remove b from a
-##a is your image of interest,
-##b is the background or autofluorescence you want to remove
-##input one frame per image
-##nuc = if image is nuclear staining, the output will be a binary image
+
 def rm_image_background(a, b, nuc = False):
+"""
+Remove image b from image a - assumes images are of the same dimensions/shape
+:param a: is your image of interest,
+:param b: b is the background or autofluorescence you want to remove input one frame per image
+:param nuc: if image is nuclear staining (e.g. nuc=True), the output will be a binary/segmented image
+"""
     #Convert images to arrays
     im1_image_array = np.array(b)
     im2_image_array = np.array(a)
@@ -46,12 +48,13 @@ def rm_image_background(a, b, nuc = False):
     else:
         return im3_image_array
     
-
-##bin image, either nuclei segmented image or intensity image
-##a = image of interest (one frame/channel)
-##bin_width = binsize in pixels
-##nuc = if image is nuclei segmented and labeled (for example with bwlabel)
 def bin_image(a, bin_width, nuc = False):
+"""
+Bin image, either nuclei segmented image or intensity image
+:param a: Image of interest (one frame/channel)
+:param bin_width: Binsize in pixels
+:param nuc: If image is nuclei segmented and labeled, set nuc=True
+"""
     mat = np.array(a)
     bin_size = bin_width
     n_col = np.floor(mat.shape[1]/bin_size)
@@ -90,12 +93,16 @@ def bin_image(a, bin_width, nuc = False):
                 
     return mat_bin
 
-##remove background from all filters in two aligned images (pre and post)
-##(input three RGB aligned images, DAPI/FITC pre, DAPI/TRITC pre, FITC/TRITC post), 
-##the pre and post staining images.
-##the blue filter is dapi, and so will be nuclei which will give a binary image.
-##Use bwlabel() on the dapi/blue frame/channel to segment/label the output frame containing the binary frame of cells.
+
 def rm_sample_background(a, b, c):
+"""
+Remove background from all filters in two aligned images (pre and post). input three RGB aligned images, 
+DAPI/FITC pre, DAPI/TRITC pre, FITC/TRITC post), the pre and post staining images. The blue filter is dapi, and so will be the nuclei and will give a binary image.
+Make sure to have segmented/labeled the dapi/blue frame/channel.
+:param a: The green/fitc image prior staining, blue/dapi channel is the segmented nuclei image
+:param b: The red/tritc image prior staining, blue/dapi channel is the segmented nuclei image
+:param c: The green/fitc and red/tritc image post staining, blue/dapi channel is the segmented nuclei image
+"""
     rgb_img_fitc_pre = np.array(a)
     rgb_img_tritc_pre = np.array(b)
     rgb_img_fitc_trict_post = np.array(c)
@@ -116,11 +123,14 @@ def rm_sample_background(a, b, c):
 	return final_img 
 
 
-##Function for autobinning of segmented nuclearstained images
-##Takes a segmented/labeled image and finds optimal binning size
-##by sequential binning and finding a maxima
-##Output is the optimal binning size
+
 def autobinning(img, name):
+"""
+Autobinning of segmented nuclearstained images.
+Takes a segmented/labeled image and finds optimal binning size by sequential binning and finding a maxima. Output is the optimal binning size
+:param img: Is the image of interest, which is a segmented/binary image of nuclei stained cells/objects.
+:param name: Name of the image, will name the output csv.file accordingly containing metrics of the binning procecss
+"""
     #img = np.array(x)
     tab, cell_id, cell_size = np.unique(mat[mat > 0], return_inverse=True, return_counts=True)
     # Store information about the autobinning in a .csv-file
@@ -194,11 +204,13 @@ def autobinning(img, name):
     # Returns data fram with information about the bin counts
 	return df_autobin 								
 
-##Bin an RGB image, bins the channels/frames seperately then returns a binned RGB image.
-##input:
-##a = RGB image, representing TRITC/FITC/DAPI, in that order
-##bin_width = the bin size in pixels
+
 def bin_rgb_image(a, bin_width):
+"""
+Bin an RGB image, bins the channels/frames seperately then returns a binned RGB image.
+:param a: RGB image, representing TRITC/FITC/DAPI (red/green/blue), in that order
+:param bin_width: Bin width/size in pixels
+"""
     #store image as imagedata
 	rgb_image = np.array(a)			
 	#Extract red filter from image
@@ -291,22 +303,14 @@ def correct_samples(x):
                         corrected_image.save(f"{os.path.dirname(directory)}/{corrected_image.name}.jpeg")
 
 
-##From a folder containing samples, each sample having their own folder,
-##where each sample needs to have all of its channels in that specific folder.
-##all images need to be named by channel with suffix pre or post
-##(representing before or after staining with antibody)
-##ex. samplename_dapi_pre.jpg, samplename_dapi_post.jpg, 
-##samplename_fitc_pre.jpg and samplename_fitc_post.jpg
-##the folder needs to contain the DAPI channel and at least one of FITC or TRITC
-##
-##- not yet - (if you use one marker only, 
-##the code will anyway just copy the FITC values into the TRITC or vice verca)
-## ex...
-## //path/folder_containing_individual_folders_for_each_sample
-## //path/folder_containing_individual_folders_for_each_sample/folder_timepoint_1
-## //path/folder_containing_individual_folders_for_each_sample/folder_timepoint_1/samplename_dapi_pre.jpg, samplename_dapi_post.jpg, samplename_fitc_pre.jpg and samplename_fitc_post.jpg
-
 def normalize_with_autobinning_samples():
+"""
+You will be prompted to choose a directory. The directory should contain each sample that are in their own folder,
+Each sample should have each channel/color represented as individal images within the sample's folder.
+All images need to be named by channel and with the suffix "pre" or "post" (representing before or after staining with antibody)
+example => "samplename_dapi_pre.jpg", "samplename_dapi_post.jpg", "samplename_fitc_pre.jpg" and "samplename_fitc_post.jpg"
+Each sample needs a DAPI channel, or cell nuclei stained image (object stained) and at least one of FITC or TRITC.
+"""
     root = tk.Tk()
     root.withdraw()
     root.call('wm', 'attributes', '.', '-topmost', True)
